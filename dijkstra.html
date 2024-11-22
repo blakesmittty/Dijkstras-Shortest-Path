@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijkstra's Algorithm Visualization</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: rgb(136, 123, 248);
+
+
+    }
+
+    canvas {
+        border: 1px solid #000;
+        background-color: rgb(180, 172, 255);
+        border-radius: 8px;
+    }
+
+    .controls {
+        border: 1px solid #000;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: rgb(180, 172, 255);
+        display: flex; 
+        flex-wrap: wrap; 
+        justify-content: space-around; 
+        gap: 10px; 
+        font-size: larger;
+    }
+
+    .container {
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #runAlgorithm {
+        background-color: rgb(180, 172, 255);
+        font-size: 18px;
+        border: 1px solid #000;
+        border-radius: 8px;
+        color: black;
+    }
+
+    #runAlgorithm:hover {
+        background-color: rgb(213, 209, 251);
+        cursor: pointer;
+    }
+
+    h1 {
+        color: rgb(180, 172, 255);
+        text-shadow: #000;
+    }
+    select {
+        font-size: 18px;
+        background-color: rgb(180, 172, 255);
+        border-radius: 6px;
+    }
+    
+  </style>
+</head>
+<body>
+    <h1>Dijkstra's Algorithm Visualization</h1>
+    <div class="container">
+        <canvas id="graphCanvas" width="600" height="400"></canvas>
+        <div class="controls">
+            <div>
+                <label for="startNode">Start Node:</label>
+                <select id="startNode"></select>
+            </div>
+            <div>
+                <label for="endNode">End Node:</label>
+                <select id="endNode"></select>
+            </div>          
+            <button id="runAlgorithm">Run Algorithm</button>
+        </div>
+        <p id="output"></p>
+
+    </div>
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+
+    // Graph representation
+    const graph = {
+        A: { B: 4, C: 2, G: 2 },
+        B: { A: 4, C: 1, D: 4, F: 7},
+        C: { A: 2, B: 1, D: 8, E: 10 },
+        D: { B: 4, C: 8, E: 2, F: 3 }, 
+        E: { C: 10, D: 2, G: 3 },
+        F: { D: 3, B: 7 },
+        G: { A: 2, E: 3, C: 5 },
+    };
+
+
+    const nodes = Object.keys(graph);
+
+    // Populate dropdowns with nodes
+    const startNodeSelect = document.getElementById('startNode');
+    const endNodeSelect = document.getElementById('endNode');
+    nodes.forEach(node => {
+        const startOption = document.createElement('option');
+        startOption.value = node;
+        startOption.text = node;
+        startNodeSelect.appendChild(startOption);
+
+        const endOption = document.createElement('option');
+        endOption.value = node;
+        endOption.text = node;
+        endNodeSelect.appendChild(endOption);
+    });
+
+    // Draw the graph
+    const positions = {
+        A: { x: 100, y: 100 },
+        B: { x: 300, y: 100 },
+        C: { x: 200, y: 200 },
+        D: { x: 400, y: 300 },
+        E: { x: 100, y: 300 },
+        F: { x: 500, y: 100 },
+        G: { x: 50, y: 200 },
+    };
+
+    function drawGraph() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "18px Arial";
+
+      // Draw edges
+        for (const [node, neighbors] of Object.entries(graph)) {
+            for (const [neighbor, weight] of Object.entries(neighbors)) {
+                ctx.beginPath();
+                ctx.moveTo(positions[node].x, positions[node].y);
+                ctx.lineTo(positions[neighbor].x, positions[neighbor].y);
+                ctx.stroke();
+
+                // Calculate midpoint for text
+                const midX = (positions[node].x + positions[neighbor].x) / 2;
+                const midY = (positions[node].y + positions[neighbor].y) / 2;
+
+                // Add background for text
+                const text = String(weight);
+                const textWidth = ctx.measureText(text).width;
+                ctx.fillStyle = "rgba(255, 255, 255, 1)";
+                ctx.fillRect(midX - textWidth / 2 - 4, midY - 16, textWidth + 8, 20);
+
+                // Draw edge weight text
+                ctx.fillStyle = "blue";
+                ctx.fillText(weight, midX - textWidth / 2, midY);
+            }
+        }
+
+        // Draw nodes
+        for (const [node, { x, y }] of Object.entries(positions)) {
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.fillText(node, x - 5, y + 5);
+        }
+    }
+
+    drawGraph();
+
+    // Dijkstra's algorithm
+    function dijkstra(graph, startNode, endNode) {
+        const distances = {};
+        const previous = {};
+        const queue = new Set(nodes);
+
+      // Initialize distances
+        nodes.forEach(node => {
+            distances[node] = Infinity;
+            previous[node] = null;
+        });
+        distances[startNode] = 0;
+
+        while (queue.size > 0) {
+            const currentNode = Array.from(queue).reduce(
+            (minNode, node) => distances[node] < distances[minNode] ? node : minNode,
+            Array.from(queue)[0]
+            );
+
+            queue.delete(currentNode);
+
+            if (currentNode === endNode) {
+                break;
+            }
+
+            for (const [neighbor, weight] of Object.entries(graph[currentNode])) {
+                const alt = distances[currentNode] + weight;
+                if (alt < distances[neighbor]) {
+                    distances[neighbor] = alt;
+                    previous[neighbor] = currentNode;
+                }
+            }
+        }
+
+      // Reconstruct path
+        const path = [];
+        let currentNode = endNode;
+        while (currentNode) {
+            path.unshift(currentNode);
+            currentNode = previous[currentNode];
+        }
+
+        return { path, distance: distances[endNode] };
+    }
+
+    // Event listener
+    document.getElementById('runAlgorithm').addEventListener('click', () => {
+        const startNode = startNodeSelect.value;
+        const endNode = endNodeSelect.value;
+
+        const { path, distance } = dijkstra(graph, startNode, endNode);
+
+        document.getElementById('output').innerText = `Shortest path: ${path.join(' -> ')} (Distance: ${distance})`;
+
+        // Highlight path
+        drawGraph();
+        for (let i = 0; i < path.length - 1; i++) {
+            const from = path[i];
+            const to = path[i + 1];
+            ctx.beginPath();
+            ctx.moveTo(positions[from].x, positions[from].y);
+            ctx.lineTo(positions[to].x, positions[to].y);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+        }
+    });
+  </script>
+</body>
+</html>
