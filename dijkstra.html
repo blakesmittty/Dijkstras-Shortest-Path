@@ -166,38 +166,46 @@
 
     drawGraph();
 
-    // Dijkstra's algorithm
+    // Dijkstra's algorithm - Big O(n^2)
     function dijkstra(graph, startNode, endNode) {
+        // Initialize the distances object to store the shortest known distance to each node
         const distances = {};
+        // Initialize the previous object to store the previous node in the shortest path
         const previous = {};
+        // Create a queue (set of unvisited nodes) containing all nodes in the graph
         const queue = new Set(nodes);
 
-      // Initialize distances
-        nodes.forEach(node => {
-            distances[node] = Infinity;
-            previous[node] = null;
+        // Initialize distances
+        nodes.forEach(node => { // O(n) where n = nodes
+            distances[node] = Infinity; // All nodes start with a distance of infinity
+            previous[node] = null; // No previous node is known initially
         });
-        distances[startNode] = 0;
+        distances[startNode] = 0; // The distance to the start node is 0
 
+        // Main loop: process nodes in the queue until it is empty, O(n) in the worst case, where n = unvisited nodes
         while (queue.size > 0) {
-            const currentNode = Array.from(queue).reduce(
+            // Find the unvisited node with the smallest distance from the start node
+            const currentNode = Array.from(queue).reduce(  
             (minNode, node) => distances[node] < distances[minNode] ? node : minNode,
-            Array.from(queue)[0]
-            );
+            Array.from(queue)[0] // Start the comparison with the first node in the queue
+            ); // O(n) in the worst case
 
+            // Remove the current node from the queue (mark it as visited)
             queue.delete(currentNode);
 
+            // If the end node is reached, exit the loop early
             if (currentNode === endNode) {
                 break;
             }
 
+            // Update the distances to each neighbor of the current node, O(n) in the worst case where n = edges
             for (const [neighbor, weight] of Object.entries(graph[currentNode])) {
-                const alt = distances[currentNode] + weight;
-                if (alt < distances[neighbor]) {
-                    distances[neighbor] = alt;
-                    previous[neighbor] = currentNode;
+                const alt = distances[currentNode] + weight; // Calculate new distance
+                if (alt < distances[neighbor]) { // If a shorter path is found
+                    distances[neighbor] = alt; // Update the distance to the neighbor
+                    previous[neighbor] = currentNode; // Update the previous node for the neighbor
                 }
-            }
+            } 
         }
 
       // Reconstruct path
